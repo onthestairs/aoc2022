@@ -8,7 +8,6 @@ module Run where
 
 import AOC
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, runAoC)
--- import Day02
 -- import Day03
 -- import Day04
 -- import Day05
@@ -35,33 +34,34 @@ import Control.Lens
 import Data.Generics.Labels
 import qualified Data.Map.Strict as Map
 import Day01
+import Day02
 import Relude
 import System.Environment (getEnv)
 import Text.Megaparsec (runParser)
 
 solutions =
   Map.fromList
-    [ (1, SimpleSolution Day01.solution)
-    -- (2, SimpleSolution Day02.solution),
-    -- (3, SimpleSolution Day03.solution),
-    -- (4, SimpleSolution Day04.solution),
-    -- (5, SimpleSolution Day05.solution),
-    -- (6, SimpleSolution Day06.solution),
-    -- (7, SimpleSolution Day07.solution),
-    -- (8, SimpleSolution Day08.solution),
-    -- (9, SimpleSolution Day09.solution),
-    -- (10, SimpleSolution Day10.solution),
-    -- (11, SimpleSolution Day11.solution),
-    -- (12, SimpleSolution Day12.solution),
-    -- (13, SimpleSolution Day13.solution),
-    -- (14, SimpleSolution Day14.solution),
-    -- (15, SimpleSolution Day15.solution),
-    -- (16, SimpleSolution Day16.solution),
-    -- (17, SimpleSolution Day17.solution),
-    -- (18, SimpleSolution Day18.solution),
-    -- (20, SimpleSolution Day20.solution),
-    -- (21, SimpleSolution Day21.solution),
-    -- (22, SimpleSolution Day22.solution)
+    [ (1, SimpleSolution Day01.solution),
+      (2, SimpleSolution Day02.solution)
+      -- (3, SimpleSolution Day03.solution),
+      -- (4, SimpleSolution Day04.solution),
+      -- (5, SimpleSolution Day05.solution),
+      -- (6, SimpleSolution Day06.solution),
+      -- (7, SimpleSolution Day07.solution),
+      -- (8, SimpleSolution Day08.solution),
+      -- (9, SimpleSolution Day09.solution),
+      -- (10, SimpleSolution Day10.solution),
+      -- (11, SimpleSolution Day11.solution),
+      -- (12, SimpleSolution Day12.solution),
+      -- (13, SimpleSolution Day13.solution),
+      -- (14, SimpleSolution Day14.solution),
+      -- (15, SimpleSolution Day15.solution),
+      -- (16, SimpleSolution Day16.solution),
+      -- (17, SimpleSolution Day17.solution),
+      -- (18, SimpleSolution Day18.solution),
+      -- (20, SimpleSolution Day20.solution),
+      -- (21, SimpleSolution Day21.solution),
+      -- (22, SimpleSolution Day22.solution)
     ]
 
 data Part = Part1 | Part2 | Both deriving (Eq)

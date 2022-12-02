@@ -14,7 +14,7 @@ type Input = [[Int]]
 parseInts :: Parser Input
 parseInts = sepBy1 (sepByNewline parseInt) "\n\n"
 
-solve1 nss = viaNonEmpty maximum1 $ map sum nss
+solve1 = viaNonEmpty maximum1 . map sum
 
 solve2 = sum . take 3 . reverse . sort . map sum
 

@@ -8,7 +8,6 @@ module Run where
 
 import AOC
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, runAoC)
--- import Day05
 -- import Day06
 -- import Day07
 -- import Day08
@@ -35,17 +34,19 @@ import Day01
 import Day02
 import Day03
 import Day04
+import Day05
 import Relude
 import System.Environment (getEnv)
 import Text.Megaparsec (runParser)
+import Text.Megaparsec.Debug (dbg)
 
 solutions =
   Map.fromList
     [ (1, SimpleSolution Day01.solution),
       (2, SimpleSolution Day02.solution),
       (3, SimpleSolution Day03.solution),
-      (4, SimpleSolution Day04.solution)
-      -- (5, SimpleSolution Day05.solution),
+      (4, SimpleSolution Day04.solution),
+      (5, SimpleSolution Day05.solution)
       -- (6, SimpleSolution Day06.solution),
       -- (7, SimpleSolution Day07.solution),
       -- (8, SimpleSolution Day08.solution),
@@ -88,6 +89,8 @@ submitToAoC day part answer = do
 
 parseInput parser input = rightToMaybe $ runParser parser "" input
 
+parseInputDebug parser input = runParser (dbg "input" parser) "" input
+
 peekInput :: Int -> IO ()
 peekInput day = do
   let maybeSolution = Map.lookup day solutions
@@ -95,13 +98,13 @@ peekInput day = do
   case maybeSolution of
     Nothing -> putStrLn "No solution"
     Just (SimpleSolution solution) -> do
-      let parsed = parseInput (view #_parse solution) input
+      let parsed = parseInputDebug (view #_parse solution) input
       print parsed
     Just (TwoParseSolution solution) -> do
-      let parsed1 = parseInput (view #_parse1 solution) input
+      let parsed1 = parseInputDebug (view #_parse1 solution) input
       putStrLn "Part 1"
       print parsed1
-      let parsed2 = parseInput (view #_parse2 solution) input
+      let parsed2 = parseInputDebug (view #_parse2 solution) input
       putStrLn "Part 2"
       print parsed2
 

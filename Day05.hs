@@ -63,17 +63,8 @@ parseInput = do
 forceMaybe (Just x) = x
 forceMaybe Nothing = error "no value"
 
-moveOne9000 css from to = [makeStack i | i <- [1 .. length css]]
-  where
-    (c, newFrom) = forceMaybe $ uncons $ forceMaybe $ css !!? (from - 1)
-    newTo = c : forceMaybe (css !!? (to - 1))
-    makeStack i
-      | i == from = newFrom
-      | i == to = newTo
-      | otherwise = forceMaybe $ css !!? (i - 1)
-
 makeMove9000 css (0, from, to) = css
-makeMove9000 css (n, from, to) = makeMove9000 (moveOne9000 css from to) (n - 1, from, to)
+makeMove9000 css (n, from, to) = makeMove9000 (makeMove9001 css (1, from, to)) (n - 1, from, to)
 
 solve1 = mapMaybe (viaNonEmpty head) . uncurry (foldl' makeMove9000)
 

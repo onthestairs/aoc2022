@@ -14,9 +14,9 @@ import Data.Functor.Base (TreeF (..))
 import Data.Functor.Foldable (Recursive (cata), ana, hylo)
 import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.List (nub)
-import Data.Tree (Tree (..), drawTree, unfoldTree)
+import Data.Tree (Tree (..), drawTree, flatten, unfoldTree)
 import Relude
-import Relude.Extra (Foldable1 (maximum1))
+import Relude.Extra (Foldable1 (maximum1, minimum1))
 import Text.Megaparsec (eof, noneOf, sepBy1)
 import Text.Megaparsec.Char (char, lowerChar, newline, string)
 
@@ -86,36 +86,40 @@ nextPrefixes prefix xs = nub $ mapMaybe f xs
       | isListPrefix prefix path = Just (take (length prefix + 1) path)
       | otherwise = Nothing
 
-makeFileTree :: [([String], Int)] -> FS [String]
-makeFileTree cs = ana coalg []
+makeFileTree :: [([String], Int)] -> FS String
+makeFileTree cs = ana coalg ["/"]
   where
     coalg prefix = case find ((==) prefix . fst) cs of
       (Just (file, size)) -> FSFileF (last' file, size)
-      Nothing -> FSDirF prefix (nextPrefixes prefix cs)
+      Nothing -> FSDirF (last' prefix) (nextPrefixes prefix cs)
 
-annotateSubSizesAlg :: FSF [String] (FS ([String], Int)) -> FS ([String], Int)
+annotateSubSizesAlg :: FSF String (FS (String, Int)) -> FS (String, Int)
 annotateSubSizesAlg (FSDirF name cs) = FSDir (name, sum $ map getSize cs) cs
   where
     getSize (FSDir (name, size) _) = size
     getSize (FSFile (name, size)) = size
 annotateSubSizesAlg (FSFileF (name, size)) = FSFile (name, size)
 
-annotateSubSizes :: FS [String] -> FS ([String], Int)
+annotateSubSizes :: FS String -> FS (String, Int)
 annotateSubSizes = cata annotateSubSizesAlg
 
-t :: Tree (String, Int)
-t = Node ("hello", 4) [Node ("c1", 3) [], Node ("c2", 9) []]
-
-countSmallDirsAlg :: Int -> FSF ([String], Int) Int -> Int
+countSmallDirsAlg :: Int -> FSF (String, Int) Int -> Int
 countSmallDirsAlg n (FSDirF (name, size) cs) = if size <= n then size + sum cs else sum cs
 countSmallDirsAlg n _ = 0
 
-findSmallDirs :: Int -> FS [String] -> Int
+findSmallDirs :: Int -> FS String -> Int
 findSmallDirs n = cata (countSmallDirsAlg n) . cata annotateSubSizesAlg
 
 solve1 = findSmallDirs 100_000 . makeFileTree . makeFileList
 
-solve2 = makeFileTree . makeFileList
+possibleDirsToDelete n (FSDirF (name, size) cs) = if size >= n then size : concat cs else concat cs
+possibleDirsToDelete n _ = []
+
+solve2 cs = viaNonEmpty minimum1 $ cata (possibleDirsToDelete minimumSize) fs
+  where
+    fs = cata annotateSubSizesAlg $ makeFileTree $ makeFileList cs
+    totalSpace = case fs of FSDir ("/", size) _ -> size
+    minimumSize = 30_000_000 - (70_000_000 - totalSpace)
 
 solution =
   Solution

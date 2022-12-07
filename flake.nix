@@ -22,6 +22,8 @@
           lens
           generic-lens
           advent-of-code-api
+          recursion-schemes
+          containers
         ];
         my-ghc = myHaskellPackages.ghcWithPackages haskellDeps;
 

@@ -24,6 +24,7 @@
           advent-of-code-api
           recursion-schemes
           containers
+          matrix
         ];
         my-ghc = myHaskellPackages.ghcWithPackages haskellDeps;
 

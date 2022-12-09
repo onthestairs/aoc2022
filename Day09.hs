@@ -5,11 +5,9 @@ module Day09 (solution) where
 
 import AOC (Parser, Solution (..), last', parseInt, sepByNewline)
 import Data.List (nub)
-import Data.Matrix (matrix)
 import Relude
-import Relude.Extra (Foldable1 (maximum1))
-import Text.Megaparsec (eof, sepBy1)
-import Text.Megaparsec.Char (char, letterChar, newline)
+import Text.Megaparsec (sepBy1)
+import Text.Megaparsec.Char (char, newline)
 
 data Dir = R | L | U | D deriving (Show)
 
@@ -35,21 +33,7 @@ distance (x1, y1) (x2, y2) = max (abs (x1 - x2)) (abs (y1 - y2))
 
 moveTowards (x1, y1) (x2, y2)
   | distance (x1, y1) (x2, y2) <= 1 = (x2, y2)
-  -- horizontal
-  | x1 == x2 + 2 && y1 == y2 = (x2 + 1, y2)
-  | x1 == x2 - 2 && y1 == y2 = (x2 - 1, y2)
-  -- vertical
-  | y1 == y2 + 2 && x1 == x2 = (x2, y2 + 1)
-  | y1 == y2 - 2 && x1 == x2 = (x2, y2 - 1)
-  -- top right diag
-  | y1 < y2 && x1 > x2 = (x2 + 1, y2 - 1)
-  -- bottom right diag
-  | y1 > y2 && x1 > x2 = (x2 + 1, y2 + 1)
-  -- bottom left diag
-  | y1 > y2 && x1 < x2 = (x2 - 1, y2 + 1)
-  -- top left diag
-  | y1 < y2 && x1 < x2 = (x2 - 1, y2 - 1)
-  | otherwise = (x2, y2)
+  | otherwise = (x2 + signum (x1 - x2), y2 + signum (y1 - y2))
 
 moveRope [] _ = []
 moveRope (h : ks) dir = h' : ks'

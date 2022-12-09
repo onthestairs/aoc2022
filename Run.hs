@@ -8,7 +8,6 @@ module Run where
 
 import AOC
 import Advent (AoC (AoCInput, AoCSubmit), defaultAoCOpts, runAoC)
--- import Day09
 -- import Day10
 -- import Day11
 -- import Day12
@@ -35,6 +34,7 @@ import Day05
 import Day06
 import Day07
 import Day08
+import Day09
 import Relude
 import System.Environment (getEnv)
 import Text.Megaparsec (runParser)
@@ -49,8 +49,8 @@ solutions =
       (5, SimpleSolution Day05.solution),
       (6, SimpleSolution Day06.solution),
       (7, SimpleSolution Day07.solution),
-      (8, SimpleSolution Day08.solution)
-      -- (9, SimpleSolution Day09.solution),
+      (8, SimpleSolution Day08.solution),
+      (9, SimpleSolution Day09.solution)
       -- (10, SimpleSolution Day10.solution),
       -- (11, SimpleSolution Day11.solution),
       -- (12, SimpleSolution Day12.solution),

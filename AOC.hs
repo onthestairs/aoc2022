@@ -1,8 +1,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseSignedInt, sepByNewline) where
+module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseSignedInt, sepByNewline, init', last', forceMaybe) where
 
 import Control.Lens
 import Relude
@@ -77,3 +78,10 @@ sepByNewline p = do
       when (c == '\n') (fail "double newline")
       p
   pure $ x : xs
+
+init' = reverse . drop 1 . reverse
+
+forceMaybe (Just x) = x
+forceMaybe Nothing = error "no value"
+
+last' = forceMaybe . viaNonEmpty last

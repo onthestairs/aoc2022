@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseSignedInt, sepByNewline, init', last', forceMaybe) where
+module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', last', forceMaybe, chunk) where
 
 import Control.Lens
 import Relude
@@ -68,6 +68,12 @@ parseSignedInt = do
   let coefficient = if sign == '+' then 1 else -1
   pure $ coefficient * n
 
+parseNegativeInt :: Parser Int
+parseNegativeInt = do
+  char '-'
+  n <- parseInt
+  pure $ (-1) * n
+
 sepByNewline :: Parser a -> Parser [a]
 sepByNewline p = do
   x <- p
@@ -85,3 +91,7 @@ forceMaybe (Just x) = x
 forceMaybe Nothing = error "no value"
 
 last' = forceMaybe . viaNonEmpty last
+head' = forceMaybe . viaNonEmpty head
+
+chunk n [] = []
+chunk n xs = take n xs : chunk n (drop n xs)

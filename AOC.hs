@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', last', forceMaybe, chunk) where
+module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', tail', last', forceMaybe, chunk) where
 
 import Control.Lens
 import Relude
@@ -91,7 +91,10 @@ forceMaybe (Just x) = x
 forceMaybe Nothing = error "no value"
 
 last' = forceMaybe . viaNonEmpty last
+
 head' = forceMaybe . viaNonEmpty head
+
+tail' = forceMaybe . viaNonEmpty tail
 
 chunk n [] = []
 chunk n xs = take n xs : chunk n (drop n xs)

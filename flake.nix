@@ -25,6 +25,7 @@
           recursion-schemes
           containers
           matrix
+          fgl
         ];
         my-ghc = myHaskellPackages.ghcWithPackages haskellDeps;
 

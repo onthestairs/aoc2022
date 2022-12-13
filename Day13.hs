@@ -29,26 +29,18 @@ parsePacketPair = do
 parseInput :: Parser Input
 parseInput = sepByNewline parsePacketPair
 
-data Order = Yes | No | NotSure deriving (Eq, Show)
+instance Ord Packet where
+  compare (I n1) (I n2) = compare n1 n2
+  compare (L p1s) (L p2s) = go p1s p2s
+    where
+      go [] (p2 : ps2') = LT
+      go (p1 : ps1') [] = GT
+      go [] [] = EQ
+      go ps1 ps2 = compare ps1 ps2
+  compare (I n1) (L ps2) = compare (L [I n1]) (L ps2)
+  compare (L ps1) (I n2) = compare (L ps1) (L [I n2])
 
-isInRightOrder (I n1) (I n2)
-  | n1 < n2 = Yes
-  | n2 < n1 = No
-  | otherwise = NotSure
-isInRightOrder (L p1s) (L p2s) = go p1s p2s
-  where
-    go (p1 : ps1') (p2 : ps2') = if c == NotSure then go ps1' ps2' else c
-      where
-        c = isInRightOrder p1 p2
-    go [] (p2 : ps2') = Yes
-    go (p1 : ps1') [] = No
-    go [] [] = NotSure
-isInRightOrder (I n1) (L ps2) = isInRightOrder (L [I n1]) (L ps2)
-isInRightOrder (L ps1) (I n2) = isInRightOrder (L ps1) (L [I n2])
-
-isInRightOrder' p1 p2 = (== Yes) $ isInRightOrder p1 p2
-
-solve1 = sum . map fst . filter snd . zip [1 ..] . map (uncurry isInRightOrder')
+solve1 = sum . map fst . filter ((== LT) . snd) . zip [1 ..] . map (uncurry compare)
 
 toL (p1, p2) = [p1, p2]
 
@@ -60,9 +52,7 @@ extras = [extra1, extra2]
 
 findIndexes ks xs = map (+ 1) $ mapMaybe (`elemIndex` xs) ks
 
-solve2 = product . findIndexes extras . sortBy sorter . (extras ++) . concatMap toL
-  where
-    sorter p1 p2 = if isInRightOrder' p1 p2 then LT else GT
+solve2 = product . findIndexes extras . sort . (extras ++) . concatMap toL
 
 solution =
   Solution

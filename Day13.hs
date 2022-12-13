@@ -31,12 +31,7 @@ parseInput = sepByNewline parsePacketPair
 
 instance Ord Packet where
   compare (I n1) (I n2) = compare n1 n2
-  compare (L p1s) (L p2s) = go p1s p2s
-    where
-      go [] (p2 : ps2') = LT
-      go (p1 : ps1') [] = GT
-      go [] [] = EQ
-      go ps1 ps2 = compare ps1 ps2
+  compare (L p1s) (L p2s) = compare p1s p2s
   compare (I n1) (L ps2) = compare (L [I n1]) (L ps2)
   compare (L ps1) (I n2) = compare (L ps1) (L [I n2])
 

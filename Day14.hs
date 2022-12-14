@@ -42,45 +42,29 @@ buildGrid rs = Grid {rocks = cs, maxY = maxY}
     cs = buildCoords rs
     maxY = maximum $ map snd $ Set.toList cs
 
-findNextCoord (x, y) os
+findNextCoord hasFloor maxY (x, y) os
+  | hasFloor && (y + 1 == (maxY + 2)) = (x, y)
   | not $ Set.member (x, y + 1) os = (x, y + 1)
   | not $ Set.member (x - 1, y + 1) os = (x - 1, y + 1)
   | not $ Set.member (x + 1, y + 1) os = (x + 1, y + 1)
   | otherwise = (x, y)
 
-dropSand (x, y) maxY os
-  | y > maxY = Nothing
-  | otherwise = if nextCoord == (x, y) then Just (x, y) else dropSand nextCoord maxY os
+dropSand hasFloor maxY (x, y) os
+  | not hasFloor && y > maxY = Nothing
+  | otherwise = if nextCoord == (x, y) then Just (x, y) else dropSand hasFloor maxY nextCoord os
   where
-    nextCoord = findNextCoord (x, y) os
+    nextCoord = findNextCoord hasFloor maxY (x, y) os
 
-dropSands (Grid rocks maxY) = go Set.empty
+dropSands hasFloor (Grid rocks maxY) = go Set.empty
   where
-    go sands = case dropSand (500, 0) maxY (Set.union rocks sands) of
-      Just settled -> go (Set.insert settled sands)
-      Nothing -> sands
-
-solve1 = length . dropSands . buildGrid
-
-findNextCoord2 floorY (x, y) os
-  | y + 1 == floorY = (x, y)
-  | not $ Set.member (x, y + 1) os = (x, y + 1)
-  | not $ Set.member (x - 1, y + 1) os = (x - 1, y + 1)
-  | not $ Set.member (x + 1, y + 1) os = (x + 1, y + 1)
-  | otherwise = (x, y)
-
-dropSand2 (x, y) maxY os = if nextCoord == (x, y) then Just (x, y) else dropSand2 nextCoord maxY os
-  where
-    nextCoord = findNextCoord2 (maxY + 2) (x, y) os
-
-dropSands2 (Grid rocks maxY) = go Set.empty
-  where
-    go sands = case dropSand2 (500, 0) maxY (Set.union rocks sands) of
+    go sands = case dropSand hasFloor maxY (500, 0) (Set.union rocks sands) of
       Just (500, 0) -> Set.insert (500, 0) sands
       Just settled -> go (Set.insert settled sands)
       Nothing -> sands
 
-solve2 = length . dropSands2 . buildGrid
+solve1 = length . dropSands False . buildGrid
+
+solve2 = length . dropSands True . buildGrid
 
 solution =
   Solution

@@ -42,29 +42,42 @@ buildGrid rs = Grid {rocks = cs, maxY = maxY}
     cs = buildCoords rs
     maxY = maximum $ map snd $ Set.toList cs
 
-findNextCoord hasFloor maxY (x, y) os
-  | hasFloor && (y + 1 == (maxY + 2)) = (x, y)
-  | not $ Set.member (x, y + 1) os = (x, y + 1)
-  | not $ Set.member (x - 1, y + 1) os = (x - 1, y + 1)
-  | not $ Set.member (x + 1, y + 1) os = (x + 1, y + 1)
+isRock os extraRock (x, y) = Set.member (x, y) os || extraRock (x, y)
+
+findNextCoord os extraRock (x, y)
+  | not $ isRock os extraRock (x, y + 1) = (x, y + 1)
+  | not $ isRock os extraRock (x - 1, y + 1) = (x - 1, y + 1)
+  | not $ isRock os extraRock (x + 1, y + 1) = (x + 1, y + 1)
   | otherwise = (x, y)
 
-dropSand hasFloor maxY (x, y) os
-  | not hasFloor && y > maxY = Nothing
-  | otherwise = if nextCoord == (x, y) then Just (x, y) else dropSand hasFloor maxY nextCoord os
+dropSand stopCondition extraRock (x, y) os
+  | stopCondition (x, y) = Nothing
+  | otherwise = if nextCoord == (x, y) then Just (x, y) else dropSand stopCondition extraRock nextCoord os
   where
-    nextCoord = findNextCoord hasFloor maxY (x, y) os
+    nextCoord = findNextCoord os extraRock (x, y)
 
-dropSands hasFloor (Grid rocks maxY) = go Set.empty
+dropSands stopCondition extraRock rocks source = go Set.empty
   where
-    go sands = case dropSand hasFloor maxY (500, 0) (Set.union rocks sands) of
-      Just (500, 0) -> Set.insert (500, 0) sands
+    go sands = case dropSand stopCondition extraRock source (Set.union rocks sands) of
+      Just settled | settled == source -> Set.insert source sands
       Just settled -> go (Set.insert settled sands)
       Nothing -> sands
 
-solve1 = length . dropSands False . buildGrid
+solve extraRockMaker stopConditionMaker i = length $ dropSands stopCondition extraRock rocks (500, 0)
+  where
+    Grid {rocks = rocks, maxY = maxY} = buildGrid i
+    extraRock = extraRockMaker maxY
+    stopCondition = stopConditionMaker maxY
 
-solve2 = length . dropSands True . buildGrid
+solve1 = solve extraRock stopCondition
+  where
+    extraRock _ _ = False
+    stopCondition maxY (x, y) = y > maxY
+
+solve2 = solve extraRock stopCondition
+  where
+    extraRock maxY (x, y) = y == maxY + 2
+    stopCondition _ _ = False
 
 solution =
   Solution

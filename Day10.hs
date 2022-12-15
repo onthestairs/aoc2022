@@ -4,6 +4,7 @@
 module Day10 (solution) where
 
 import AOC (AOCShow (showResult), Parser, Solution (..), chunk, head', parseDigit, parseInt, parseNegativeInt, sepByNewline)
+import qualified Data.Text as T
 import Relude
 import Text.Megaparsec (eof, oneOf, sepBy1)
 import Text.Megaparsec.Char (newline, string)
@@ -39,12 +40,12 @@ runCycles n ((i, w) : is) = n : runCycles n ((i, w - 1) : is)
 
 solve1 = sum . map (uncurry (*) . head') . chunk 40 . drop 19 . zip [1 ..] . runCycles 1 . map addWait
 
-display = zipWith (\c p -> if abs (c - p) <= 1 then '#' else '.') [0 ..]
+display = zipWith (\c p -> if abs (c - p) <= 1 then '█' else ' ') [0 ..]
 
 newtype Screen = Screen [[Char]]
 
 instance AOCShow Screen where
-  showResult (Screen pss) = unlines $ map toText pss
+  showResult (Screen pss) = T.stripEnd $ unlines $ map toText pss
 
 solve2 = Screen . map display . chunk 40 . take 240 . runCycles 1 . map addWait
 

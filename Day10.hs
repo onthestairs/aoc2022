@@ -3,7 +3,7 @@
 
 module Day10 (solution) where
 
-import AOC (Parser, Solution (..), chunk, head', parseDigit, parseInt, parseNegativeInt, sepByNewline)
+import AOC (AOCShow (showResult), Parser, Solution (..), chunk, head', parseDigit, parseInt, parseNegativeInt, sepByNewline)
 import Relude
 import Text.Megaparsec (eof, oneOf, sepBy1)
 import Text.Megaparsec.Char (newline, string)
@@ -43,8 +43,8 @@ display = zipWith (\c p -> if abs (c - p) <= 1 then '#' else '.') [0 ..]
 
 newtype Screen = Screen [[Char]]
 
-instance Show Screen where
-  show (Screen pss) = toString . unlines $ map toText pss
+instance AOCShow Screen where
+  showResult (Screen pss) = unlines $ map toText pss
 
 solve2 = Screen . map display . chunk 40 . take 240 . runCycles 1 . map addWait
 

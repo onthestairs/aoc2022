@@ -1,9 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', tail', last', forceMaybe, chunk) where
+module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), AOCShow, showResult, printResult, Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', tail', last', forceMaybe, chunk) where
 
 import Control.Lens
 import Relude
@@ -26,9 +27,27 @@ data SeparateParseSolution a b c d = SeparateParseSolution
   }
   deriving (Generic)
 
+class AOCShow a where
+  showResult :: a -> Text
+  printResult :: a -> IO ()
+  printResult = putTextLn . showResult
+
+instance Show a => AOCShow (Maybe a) where
+  showResult (Just a) = show a
+  showResult Nothing = "No result"
+
+instance AOCShow String where
+  showResult = toText
+
+instance AOCShow Integer where
+  showResult = show
+
+instance AOCShow Int where
+  showResult = show
+
 data GenericSolution where
-  SimpleSolution :: (Show a, Show b, Show c) => Solution a b c -> GenericSolution
-  TwoParseSolution :: (Show a, Show b, Show c, Show d) => SeparateParseSolution a b c d -> GenericSolution
+  SimpleSolution :: (Show a, AOCShow b, AOCShow c) => Solution a b c -> GenericSolution
+  TwoParseSolution :: (Show a, AOCShow b, Show c, AOCShow d) => SeparateParseSolution a b c d -> GenericSolution
 
 type Path = String
 

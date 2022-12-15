@@ -79,17 +79,9 @@ getInput day = do
     (Left _) -> error "no input"
     (Right input) -> pure input
 
-toAoCPart Part1 = AOC.Part1
-toAoCPart Part2 = AOC.Part2
-
-submitToAoC day part answer = do
-  aocOpts <- getOpts
-  let aocPart = toAoCPart part
-  runAoC aocOpts $ AoCSubmit (mkDay_ (fromIntegral day)) aocPart (toString answer)
-
 parseInput parser input = rightToMaybe $ runParser parser "" input
 
-parseInputDebug parser input = runParser (dbg "input" parser) "" input
+parseInputDebug parser = runParser (dbg "input" parser) ""
 
 peekInput :: Int -> IO ()
 peekInput day = do
@@ -108,49 +100,35 @@ peekInput day = do
       putStrLn "Part 2"
       print parsed2
 
-getSolution :: GenericSolution -> Int -> Part -> IO (Either Text Text)
-getSolution (SimpleSolution solution) day part = do
+showSolution :: GenericSolution -> Int -> Part -> IO ()
+showSolution (SimpleSolution solution) day part = do
   input <- getInput day
   let maybeParsed = parseInput (view #_parse solution) input
   case maybeParsed of
-    Nothing -> pure $ Left "Couldn't parse"
+    Nothing -> putStrLn "Couldn't parse"
     Just parsed -> do
-      let part1Result = view #_solve1 solution $ parsed
-      let part2Result = view #_solve2 solution $ parsed
+      let part1Result = view #_solve1 solution parsed
+      let part2Result = view #_solve2 solution parsed
       case part of
-        Part1 -> pure $ Right $ show part1Result
-        Part2 -> pure $ Right $ show part2Result
-getSolution (TwoParseSolution solution) day part = do
+        Part1 -> printResult part1Result
+        Part2 -> printResult part2Result
+        Both -> do
+          printResult part1Result
+          printResult part2Result
+showSolution (TwoParseSolution solution) day part = do
   input <- getInput day
-  case part of
-    Part1 -> do
-      let maybeParsed1 = parseInput (view #_parse1 solution) input
-      case maybeParsed1 of
-        Nothing -> pure $ Left $ "Couldn't parse part i"
-        Just parsed1 -> do
-          pure $ Right $ show $ (view #_solveWith1 solution) parsed1
-    Part2 -> do
-      let maybeParsed2 = parseInput (view #_parse2 solution) input
-      case maybeParsed2 of
-        Nothing -> pure $ Left $ "Couldn't parse part ii"
-        Just parsed2 -> do
-          pure $ Right $ show $ (view #_solveWith2 solution) parsed2
-
-showSolution :: GenericSolution -> Int -> Part -> IO ()
-showSolution solution day part = do
-  result <- getSolution solution day part
-  case result of
-    Left err -> putTextLn err
-    Right answer -> putTextLn answer
-
-submitSolution :: GenericSolution -> Int -> Part -> IO ()
-submitSolution solution day part = do
-  result <- getSolution solution day part
-  case result of
-    Left err -> putTextLn err
-    Right answer -> do
-      aocResult <- submitToAoC day part answer
-      putTextLn $ show $ aocResult
+  when (part == Part1 || part == Both) $ do
+    let maybeParsed1 = parseInput (view #_parse1 solution) input
+    case maybeParsed1 of
+      Nothing -> putStrLn "Couldn't parse part i"
+      Just parsed1 -> do
+        printResult $ view #_solveWith1 solution parsed1
+  when (part == Part2 || part == Both) $ do
+    let maybeParsed2 = parseInput (view #_parse2 solution) input
+    case maybeParsed2 of
+      Nothing -> putStrLn "Couldn't parse part ii"
+      Just parsed2 -> do
+        printResult $ view #_solveWith2 solution parsed2
 
 solve :: Int -> Part -> IO ()
 solve day part = do
@@ -167,10 +145,3 @@ solveAll = do
     putStrLn "------"
     showSolution solution day Both
     putStrLn ""
-
-submit :: Int -> Part -> IO ()
-submit day part = do
-  let maybeSolution = Map.lookup day solutions
-  case maybeSolution of
-    Nothing -> putStrLn "No solution"
-    Just solution -> submitSolution solution day part

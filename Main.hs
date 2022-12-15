@@ -1,5 +1,5 @@
 module Main where
 
-import Run (solveAll)
+import Run (Part (..), solve, solveAll)
 
 main = solveAll

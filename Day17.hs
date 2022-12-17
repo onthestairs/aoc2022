@@ -3,13 +3,12 @@
 
 module Day17 (solution) where
 
-import AOC (Parser, Solution (..), forceMaybe, head')
+import AOC (Parser, Solution (..), head')
 import Data.List (maximum, minimum)
 import qualified Data.Map as Map
 import qualified Data.Matrix as Matrix
 import qualified Data.Set as Set
 import Relude
-import Text.Megaparsec (runParser)
 import Text.Megaparsec.Char (char)
 import Text.Show
 
@@ -71,6 +70,7 @@ overlap rocks rock = any (`Set.member` rocks) rock || rockMin == 0 || minX rock 
   where
     rockMin = minY rock
 
+simulateFall _ [] _ = error "run out of dirs"
 simulateFall rocks (d : dirs) rock
   | d == D && overlap rocks nextRock = (Set.union rocks (Set.fromList rock), dirs)
   | overlap rocks nextRock = simulateFall rocks dirs rock
@@ -87,15 +87,18 @@ takeRows n rocks = Set.map (\(x, y) -> (x, n - (highest - y))) $ Set.filter (\(x
   where
     highest = maxY rocks
 
-heights :: [[(Int, Int)]] -> [Dir] -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))]
-heights rocks dirs = go dirs Set.empty (cycle rocks)
+states rocks dirs = go dirs Set.empty (cycle rocks)
   where
+    go _ _ [] = error "run out of rock"
     go dirs placed (rock : rest) = state : go nextDirs nextPlaced rest
       where
         (nextPlaced, nextDirs) = placeRock dirs placed rock
         height = maxY nextPlaced
+        -- 50 and 100 chosen somewhat arbitrarily to retain the
+        -- current state
+        -- possible improvement would be to make the dirs be equal to
+        -- the cycle length (or use an index)
         topRows = takeRows 50 placed
-        -- state = traceShow (drawRocks topRows) $ (height, take 100 nextDirs, rock, topRows)
         state = (height, take 100 nextDirs, rock, topRows)
 
 data Material = Rock | None
@@ -110,25 +113,30 @@ drawRocks rs = Matrix.matrix rows cols f
     rows = maxY rs + 1
     f (row, col) = if Set.member (col - 1, rows - row + 1) rs then Rock else None
 
-solve1 = viaNonEmpty head . drop 2021 . heights rocks . intersperse D . cycle
-
--- solve1 ds = solve 2022 ds
---
-
 fst4 (x, _, _, _) = x
 
--- calculateTotal :: Int -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))] -> Int
-calculateTotal n hs = go 1 Map.empty hs
+-- look for a loop in the states
+-- each state is approximately
+-- (dir index, rock index, top of grid)
+-- we look to see when that pattern re-occurs
+calculateTotal n = go 1 Map.empty
   where
-    -- go :: Int -> Map.Map ([Dir], [(Int, Int)], Set.Set (Int, Int)) Int -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))] -> Int
+    go _ _ [] = error "no more rocks placed"
+    go i _ ((height, ds, rock, grid) : hs') | i == n = height
     go i m ((height, ds, rock, grid) : hs') = case Map.lookup (ds, rock, grid) m of
       Just (height0, j) -> height + (diff * periods) + extraTilEnd
         where
+          -- how much we have risen during the cycle period
           diff = height - height0
-          period = traceShowId $ i - j
+          -- how many rocks per cycle
+          period = i - j
+          -- how many rocks still to fill to reach n
           toFill = n - i
-          periods = traceShowId $ toFill `div` period
-          leftover = traceShowId $ toFill `mod` period
+          -- how many cycles we will see before n
+          periods = toFill `div` period
+          -- how many rocks left over after we've filled in the cycles
+          leftover = toFill `mod` period
+          -- calculate the extra height we will see to reach n rocks
           heightTilEnd = fst4 $ head' $ drop (leftover - 1) hs'
           extraTilEnd = heightTilEnd - height
       Nothing -> go (i + 1) (Map.insert (ds, rock, grid) (height, i) m) hs'
@@ -136,14 +144,11 @@ calculateTotal n hs = go 1 Map.empty hs
 solve n ds = calculateTotal n ss
   where
     ds' = intersperse D $ cycle ds
-    ss = heights rocks ds'
+    ss = states rocks ds'
 
-p input = forceMaybe $ rightToMaybe $ runParser parseInput "" input
+solve1 = solve 2022
 
-t = p ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
-
--- solve2 = heights rocks
-solve2 ds = solve 1000000000000 ds
+solve2 = solve 1000000000000
 
 solution =
   Solution

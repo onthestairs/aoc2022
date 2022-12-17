@@ -3,8 +3,9 @@
 
 module Day17 (solution) where
 
-import AOC (Parser, Solution (..), forceMaybe)
+import AOC (Parser, Solution (..), forceMaybe, head')
 import Data.List (maximum, minimum)
+import qualified Data.Map as Map
 import qualified Data.Matrix as Matrix
 import qualified Data.Set as Set
 import Relude
@@ -12,7 +13,7 @@ import Text.Megaparsec (runParser)
 import Text.Megaparsec.Char (char)
 import Text.Show
 
-data Dir = L | R | D deriving (Eq, Show)
+data Dir = L | R | D deriving (Eq, Ord, Show)
 
 type Input = [Dir]
 
@@ -82,13 +83,20 @@ placeRock dirs rocks rock = (nextRocks, nextDirs)
     startingPoint = (2, maxY rocks + 1 + 3)
     (nextRocks, nextDirs) = simulateFall rocks dirs (place rock startingPoint)
 
-placeRocks rocks n dirs = go n allDirs Set.empty (cycle rocks)
+takeRows n rocks = Set.map (\(x, y) -> (x, n - (highest - y))) $ Set.filter (\(x, y) -> y >= highest - n) rocks
   where
-    allDirs = intersperse D (cycle dirs)
-    go 0 dirs placed _ = placed
-    go n dirs placed (r : rest) = go (n - 1) nextDirs nextPlaced rest
+    highest = maxY rocks
+
+heights :: [[(Int, Int)]] -> [Dir] -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))]
+heights rocks dirs = go dirs Set.empty (cycle rocks)
+  where
+    go dirs placed (rock : rest) = state : go nextDirs nextPlaced rest
       where
-        (nextPlaced, nextDirs) = placeRock dirs placed r
+        (nextPlaced, nextDirs) = placeRock dirs placed rock
+        height = maxY nextPlaced
+        topRows = takeRows 50 placed
+        -- state = traceShow (drawRocks topRows) $ (height, take 100 nextDirs, rock, topRows)
+        state = (height, take 100 nextDirs, rock, topRows)
 
 data Material = Rock | None
 
@@ -102,9 +110,40 @@ drawRocks rs = Matrix.matrix rows cols f
     rows = maxY rs + 1
     f (row, col) = if Set.member (col - 1, rows - row + 1) rs then Rock else None
 
-solve1 = maxY . placeRocks rocks 2022
+solve1 = viaNonEmpty head . drop 2021 . heights rocks . intersperse D . cycle
 
-solve2 = const 2
+-- solve1 ds = solve 2022 ds
+--
+
+fst4 (x, _, _, _) = x
+
+-- calculateTotal :: Int -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))] -> Int
+calculateTotal n hs = go 1 Map.empty hs
+  where
+    -- go :: Int -> Map.Map ([Dir], [(Int, Int)], Set.Set (Int, Int)) Int -> [(Int, [Dir], [(Int, Int)], Set.Set (Int, Int))] -> Int
+    go i m ((height, ds, rock, grid) : hs') = case Map.lookup (ds, rock, grid) m of
+      Just (height0, j) -> height + (diff * periods) + extraTilEnd
+        where
+          diff = height - height0
+          period = traceShowId $ i - j
+          toFill = n - i
+          periods = traceShowId $ toFill `div` period
+          leftover = traceShowId $ toFill `mod` period
+          heightTilEnd = fst4 $ head' $ drop (leftover - 1) hs'
+          extraTilEnd = heightTilEnd - height
+      Nothing -> go (i + 1) (Map.insert (ds, rock, grid) (height, i) m) hs'
+
+solve n ds = calculateTotal n ss
+  where
+    ds' = intersperse D $ cycle ds
+    ss = heights rocks ds'
+
+p input = forceMaybe $ rightToMaybe $ runParser parseInput "" input
+
+t = p ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
+
+-- solve2 = heights rocks
+solve2 ds = solve 1000000000000 ds
 
 solution =
   Solution

@@ -36,13 +36,16 @@ instance Show a => AOCShow (Maybe a) where
   showResult (Just a) = show a
   showResult Nothing = "No result"
 
-instance AOCShow String where
-  showResult = toText
-
 instance AOCShow Integer where
   showResult = show
 
 instance AOCShow Int where
+  showResult = show
+
+instance Show a => AOCShow [a] where
+  showResult = show
+
+instance (Show a, Show b) => AOCShow (a, b) where
   showResult = show
 
 data GenericSolution where

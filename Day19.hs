@@ -45,40 +45,43 @@ dfs next = go Set.empty
       where
         seen' = Set.insert x seen
 
-m2 (_, y, z) = (y, z)
+m2 (_, y, z, _) = (y, z)
 
 mine :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
-mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = map m2 $ dfs step [(0, (0, 0, 0, 0), (1, 0, 0, 0))]
+mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = map m2 $ dfs step [(0, (0, 0, 0, 0), (1, 0, 0, 0), (False, False, False))]
   where
-    step :: (Int, (Int, Int, Int, Int), (Int, Int, Int, Int)) -> [(Int, (Int, Int, Int, Int), (Int, Int, Int, Int))]
-    step (i, _, _) | i == n = []
-    step (i, (ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = map (\(cs, rs) -> (i + 1, cs, rs)) (oreBought ++ clayBought ++ obsidianBought ++ geodeBought ++ nothingBought)
+    step :: (Int, (Int, Int, Int, Int), (Int, Int, Int, Int), (Bool, Bool, Bool)) -> [(Int, (Int, Int, Int, Int), (Int, Int, Int, Int), (Bool, Bool, Bool))]
+    step (i, _, _, _) | i == n = []
+    step (i, (ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots), (didntBuildOre, didntBuildClay, didntBuildObsidian)) = map (\(cs, rs, bs) -> (i + 1, cs, rs, bs)) (oreBought ++ clayBought ++ obsidianBought ++ geodeBought ++ nothingBought)
       where
         oreBought =
-          [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
+          [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots), (False, didntBuildClay, didntBuildObsidian))
             | ore >= oreCostOre,
               oreRobots <= maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre],
-              null geodeBought
+              null geodeBought,
+              not didntBuildOre
           ]
         clayBought =
-          [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
+          [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots), (didntBuildClay, False, didntBuildObsidian))
             | ore >= clayCostOre,
               clayRobots <= obsidianCostClay,
-              null geodeBought
+              null geodeBought,
+              not didntBuildClay
           ]
         obsidianBought =
-          [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
+          [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots), (didntBuildOre, didntBuildClay, False))
             | ore >= obsidianCostOre && clay >= obsidianCostClay,
               obsidianRobots <= geodeCostObsidian,
-              null geodeBought
+              null geodeBought,
+              not didntBuildObsidian
           ]
         geodeBought =
-          [ ((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1))
+          [ ((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1), (didntBuildOre, didntBuildClay, didntBuildObsidian))
             | ore >= geodeCostOre,
               obsidian >= geodeCostObsidian
           ]
         nothingBought =
-          [ ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))
+          [ ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots), (not $ null oreBought, not $ null clayBought, not $ null obsidianBought))
           ]
 
 fth4 (_, _, _, w) = w

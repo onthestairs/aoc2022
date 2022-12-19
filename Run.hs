@@ -35,6 +35,7 @@ import Day15
 import Day16
 import Day17
 import Day18
+import Day19
 import Relude
 import System.Environment (getEnv)
 import Text.Megaparsec (runParser)
@@ -59,7 +60,8 @@ solutions =
       (15, SimpleSolution Day15.solution),
       (16, SimpleSolution Day16.solution),
       (17, SimpleSolution Day17.solution),
-      (18, SimpleSolution Day18.solution)
+      (18, SimpleSolution Day18.solution),
+      (19, SimpleSolution Day19.solution)
       -- (20, SimpleSolution Day20.solution),
       -- (21, SimpleSolution Day21.solution),
       -- (22, SimpleSolution Day22.solution)

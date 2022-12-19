@@ -52,7 +52,7 @@ mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCost
     step (i, _, _) | i == n = []
     step (i, (ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = map (\(cs, rs) -> (i + 1, cs, rs)) (oreBought ++ clayBought ++ obsidianBought ++ geodeBought ++ nothingBought)
       where
-        oreBought = [((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots)) | ore >= oreCostOre, oreRobots <= clayCostOre, oreRobots <= obsidianCostOre, oreRobots <= geodeCostOre]
+        oreBought = [((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots)) | ore >= oreCostOre, oreRobots <= maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]]
         clayBought = [((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots)) | ore >= clayCostOre, clayRobots <= obsidianCostClay]
         obsidianBought = [((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots)) | ore >= obsidianCostOre && clay >= obsidianCostClay, obsidianRobots <= geodeCostObsidian]
         geodeBought = [((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1)) | ore >= geodeCostOre && obsidian >= geodeCostObsidian]
@@ -65,8 +65,6 @@ snd3 (_, y, _) = y
 maxGeodes :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> Int
 maxGeodes n costs = maximum $ map (fth4 . snd3) $ mine n costs
 
-solve n = sum . traceShowId . map (\(id, costs) -> id * maxGeodes n costs)
-
 solve1 :: Input -> Int
 solve1 = sum . traceShowId . map (\(id, costs) -> id * maxGeodes 24 costs)
 
@@ -74,7 +72,7 @@ t1, t2 :: (Int, Int, (Int, Int), (Int, Int))
 t1 = (4, 2, (3, 14), (2, 7))
 t2 = (2, 3, (3, 8), (3, 12))
 
-solve2 _ = solve 24 [(1, t1), (2, t2)]
+solve2 = sum . traceShowId . map (maxGeodes 32 . snd) . take 3
 
 solution =
   Solution

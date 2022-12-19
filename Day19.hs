@@ -45,25 +45,48 @@ dfs next = go Set.empty
       where
         seen' = Set.insert x seen
 
-mine :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> [(Int, (Int, Int, Int, Int), (Int, Int, Int, Int))]
-mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = dfs step [(0, (0, 0, 0, 0), (1, 0, 0, 0))]
+m2 (_, y, z) = (y, z)
+
+mine :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
+mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = map m2 $ dfs step [(0, (0, 0, 0, 0), (1, 0, 0, 0))]
   where
     step :: (Int, (Int, Int, Int, Int), (Int, Int, Int, Int)) -> [(Int, (Int, Int, Int, Int), (Int, Int, Int, Int))]
     step (i, _, _) | i == n = []
     step (i, (ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = map (\(cs, rs) -> (i + 1, cs, rs)) (oreBought ++ clayBought ++ obsidianBought ++ geodeBought ++ nothingBought)
       where
-        oreBought = [((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots)) | ore >= oreCostOre, oreRobots <= maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]]
-        clayBought = [((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots)) | ore >= clayCostOre, clayRobots <= obsidianCostClay]
-        obsidianBought = [((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots)) | ore >= obsidianCostOre && clay >= obsidianCostClay, obsidianRobots <= geodeCostObsidian]
-        geodeBought = [((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1)) | ore >= geodeCostOre && obsidian >= geodeCostObsidian]
-        nothingBought = [((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))]
+        oreBought =
+          [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
+            | ore >= oreCostOre,
+              oreRobots <= maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre],
+              null geodeBought
+          ]
+        clayBought =
+          [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
+            | ore >= clayCostOre,
+              clayRobots <= obsidianCostClay,
+              null geodeBought
+          ]
+        obsidianBought =
+          [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
+            | ore >= obsidianCostOre && clay >= obsidianCostClay,
+              obsidianRobots <= geodeCostObsidian,
+              null geodeBought
+          ]
+        geodeBought =
+          [ ((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1))
+            | ore >= geodeCostOre,
+              obsidian >= geodeCostObsidian
+          ]
+        nothingBought =
+          [ ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))
+          ]
 
 fth4 (_, _, _, w) = w
 
-snd3 (_, y, _) = y
+-- snd3 (_, y, _) = y
 
 maxGeodes :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> Int
-maxGeodes n costs = maximum $ map (fth4 . snd3) $ mine n costs
+maxGeodes n costs = maximum $ map (fth4 . snd) $ mine n costs
 
 solve1 :: Input -> Int
 solve1 = sum . traceShowId . map (\(id, costs) -> id * maxGeodes 24 costs)
@@ -72,7 +95,7 @@ t1, t2 :: (Int, Int, (Int, Int), (Int, Int))
 t1 = (4, 2, (3, 14), (2, 7))
 t2 = (2, 3, (3, 8), (3, 12))
 
-solve2 = sum . traceShowId . map (maxGeodes 32 . snd) . take 3
+solve2 = sum . traceShowId . map (maxGeodes 32 . snd) . take 1
 
 solution =
   Solution

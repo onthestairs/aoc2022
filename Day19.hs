@@ -34,18 +34,20 @@ parseBlueprint = do
 parseInput :: Parser Input
 parseInput = sepByNewline parseBlueprint
 
-search n init step toSeen = go 0 Set.empty [init]
+-- a weird bfs with 'n' layers, and some state at each layer
+search n seenInit updateSeen init step = go 0 seenInit [init]
   where
     go i _ ss | i == n = ss
     go i seen ss = go (i + 1) m' ss'
       where
         ss' = concatMap (step i seen) ss
-        m' = Set.union seen (Set.fromList (map toSeen ss'))
+        m' = updateSeen seen ss'
 
 maxGeode n b = maximum $ map (fth4 . fst) $ mine n b
 
-mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = search n ((0, 0, 0, 0), (1, 0, 0, 0)) step snd
+mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = search n Set.empty updateSeen ((0, 0, 0, 0), (1, 0, 0, 0)) step
   where
+    updateSeen seen ss = Set.union seen (Set.fromList (map snd ss))
     maxOreCost = maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]
     step i m ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = nothingBuilt : builds
       where

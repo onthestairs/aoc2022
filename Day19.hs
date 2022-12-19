@@ -36,10 +36,10 @@ parseInput = sepByNewline parseBlueprint
 
 search n init step toSeen = go 0 Set.empty [init]
   where
-    go t _ ss | t == n = ss
-    go t seen ss = go (t + 1) m' ss'
+    go i _ ss | i == n = ss
+    go i seen ss = go (i + 1) m' ss'
       where
-        ss' = concatMap (step seen) ss
+        ss' = concatMap (step i seen) ss
         m' = Set.union seen (Set.fromList (map toSeen ss'))
 
 maxGeode n b = maximum $ map (fth4 . fst) $ mine n b
@@ -47,7 +47,7 @@ maxGeode n b = maximum $ map (fth4 . fst) $ mine n b
 mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = search n ((0, 0, 0, 0), (1, 0, 0, 0)) step snd
   where
     maxOreCost = maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]
-    step m ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = nothingBuilt : builds
+    step i m ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = nothingBuilt : builds
       where
         -- check we havent seen the configuarion of robots on a previous step,
         -- which will be strictly better
@@ -56,6 +56,8 @@ mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCost
           [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
             | ore >= oreCostOre,
               oreRobots <= maxOreCost,
+              -- dont build ore if we already have enough
+              ore <= (n - i) * maxOreCost,
               -- dont try to build ore if we can build obsidian or geode
               null obsidianBuilt || null geodeBuilt
           ]
@@ -63,6 +65,8 @@ mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCost
           [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
             | ore >= clayCostOre,
               clayRobots <= obsidianCostClay,
+              -- dont build clay if we already have enough
+              clay <= (n - i) * obsidianCostClay,
               -- dont try and build clay if we can build obidian or geode
               null obsidianBuilt || null geodeBuilt
           ]
@@ -70,6 +74,8 @@ mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCost
           [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
             | ore >= obsidianCostOre && clay >= obsidianCostClay,
               obsidianRobots <= geodeCostObsidian,
+              -- dont buuild obsidian if we already have enough
+              obsidian <= (n - i) * geodeCostObsidian,
               -- dont try and build obsidian if we can build geode
               null geodeBuilt
           ]

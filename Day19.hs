@@ -35,97 +35,57 @@ parseBlueprint = do
 parseInput :: Parser Input
 parseInput = sepByNewline parseBlueprint
 
--- ordNub :: Ord a => [a] -> [a]
--- ordNub xs = foldr f (const []) xs Set.empty
---   where
---     f x rec seen =
---       case rec <$> Set.alterF (\old -> (old, True)) x seen of
---         (True, ys) -> ys
---         (False, ys) -> x : ys
-
--- bfs :: (Ord a, Show a) => (a -> [a]) -> [a] -> [a]
--- bfs :: (Ord a, Show a) => s -> (s -> a -> Bool) -> (s -> [a] -> s) -> (a -> Bool) -> (a -> [a]) -> [a] -> [a]
--- bfs m prune update done next start = go m start
---   where
---     go m ss = if null ds then go m' us else ds
---       where
---         ss' = filter (prune m) $ ordNub $ concatMap next ss
---         (ds, us) = partition done ss'
---         m' = update m ss'
---
--- mine :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> [(Int, (Int, Int, Int, Int), (Int, Int, Int, Int))]
--- mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = bfs (Set.singleton (0, 0, 0, 0)) prune update done step [(0, (0, 0, 0, 0), (1, 0, 0, 0))]
---   where
---     prune m (_, _, robots) = Set.notMember robots m
---     update m ss = Set.union m (Set.fromList $ (map (\(_, _, robots) -> robots) ss))
--- done (i, _, _) = i == n
-
-mine n b@(oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = solve n b ((0, 0, 0, 0), (1, 0, 0, 0))
+search n init step toSeen = go 0 Set.empty [init]
   where
-    solve :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> ((Int, Int, Int, Int), (Int, Int, Int, Int)) -> Int
-    solve limit blue st0 = go 0 (Set.singleton (0, 0, 0, 0)) [st0]
+    go t _ ss | t == n = ss
+    go t seen ss = go (t + 1) m' ss'
       where
-        go t _ sts | t == limit = maximum (map (fth4 . fst) sts)
-        go t seen sts = go (t + 1) (Set.union seen (Set.fromList (map rep sts'))) sts'
-          where
-            sts' =
-              map mine' sts
-                ++ filter (\x -> rep x `Set.notMember` seen) (ordNub (concatMap (step) sts))
-    rep = snd
+        ss' = ordNub $ concatMap (step seen) ss
+        m' = Set.union seen (Set.fromList (map toSeen ss'))
+
+mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = maximum $ map (fth4 . fst) $ search n ((0, 0, 0, 0), (1, 0, 0, 0)) step snd
+  where
     maxOreCost = maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]
-    mine' ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))
-    step :: ((Int, Int, Int, Int), (Int, Int, Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
-    step ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = geodeBought ++ obsidianBought ++ clayBought ++ oreBought
+    step :: Set.Set (Int, Int, Int, Int) -> ((Int, Int, Int, Int), (Int, Int, Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
+    step m ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = nothingBuilt : builds
       where
-        oreBought =
+        builds = filter (\(_, rs) -> Set.notMember rs m) (geodeBuilt <> obsidianBuilt <> clayBuilt <> oreBuilt)
+        oreBuilt =
           [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
             | ore >= oreCostOre,
               oreRobots <= maxOreCost,
-              -- ore <= (n - i) * maxOreCost,
-              null obsidianBought || null geodeBought
+              null obsidianBuilt || null geodeBuilt
           ]
-        clayBought =
+        clayBuilt =
           [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
             | ore >= clayCostOre,
               clayRobots <= obsidianCostClay,
-              -- clay <= (n - i) * obsidianCostClay,
-              null obsidianBought || null geodeBought
+              null obsidianBuilt || null geodeBuilt
           ]
-        obsidianBought =
+        obsidianBuilt =
           [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
             | ore >= obsidianCostOre && clay >= obsidianCostClay,
               obsidianRobots <= geodeCostObsidian,
-              -- obsidian <= (n - i) * geodeCostObsidian,
-              null geodeBought
+              null geodeBuilt
           ]
-        geodeBought =
+        geodeBuilt =
           [ ((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1))
             | ore >= geodeCostOre && obsidian >= geodeCostObsidian
           ]
-
--- (+++) :: [a] -> [a] -> [a]
--- [] +++ xs = xs
--- xs +++ _ = xs
---
--- infixr 5 +++
+        nothingBuilt =
+          ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))
 
 fth4 (_, _, _, w) = w
 
 snd3 (_, y, _) = y
 
--- maxGeodes :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> Int
--- maxGeodes n costs = maximum $ map (fth4 . snd3) $ mine n costs
-maxGeodes :: Int -> (Int, Int, (Int, Int), (Int, Int)) -> Int
-maxGeodes n costs = mine n costs
-
-solve1 :: Input -> Int
-solve1 = sum . traceShowId . map (\(id, costs) -> id * maxGeodes 24 costs)
+solve1 = sum . map (\(id, costs) -> id * mine 24 costs)
 
 t1, t2 :: (Int, Int, (Int, Int), (Int, Int))
 t1 = (4, 2, (3, 14), (2, 7))
 t2 = (2, 3, (3, 8), (3, 12))
 
-solve2 = product . traceShowId . map (maxGeodes 32 . snd) . take 3
+solve2 = product . map (mine 32 . snd) . take 3
 
 solution =
   Solution

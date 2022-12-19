@@ -75,39 +75,39 @@ mine n b@(oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCo
     maxOreCost = maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]
     mine' ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = ((ore + oreRobots, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots))
     step :: ((Int, Int, Int, Int), (Int, Int, Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
-    step ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = geodeBought +++ obsidianBought +++ clayBought ++ oreBought
+    step ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = geodeBought ++ obsidianBought ++ clayBought ++ oreBought
       where
         oreBought =
           [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
             | ore >= oreCostOre,
-              oreRobots <= maxOreCost
+              oreRobots <= maxOreCost,
               -- ore <= (n - i) * maxOreCost,
-              -- null obsidianBought || null geodeBought
+              null obsidianBought || null geodeBought
           ]
         clayBought =
           [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
             | ore >= clayCostOre,
-              clayRobots <= obsidianCostClay
+              clayRobots <= obsidianCostClay,
               -- clay <= (n - i) * obsidianCostClay,
-              -- null obsidianBought || null geodeBought
+              null obsidianBought || null geodeBought
           ]
         obsidianBought =
           [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
             | ore >= obsidianCostOre && clay >= obsidianCostClay,
-              obsidianRobots <= geodeCostObsidian
+              obsidianRobots <= geodeCostObsidian,
               -- obsidian <= (n - i) * geodeCostObsidian,
-              -- null geodeBought
+              null geodeBought
           ]
         geodeBought =
           [ ((ore + oreRobots - geodeCostOre, clay + clayRobots, obsidian + obsidianRobots - geodeCostObsidian, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots, geodeRobots + 1))
             | ore >= geodeCostOre && obsidian >= geodeCostObsidian
           ]
 
-(+++) :: [a] -> [a] -> [a]
-[] +++ xs = xs
-xs +++ _ = xs
-
-infixr 5 +++
+-- (+++) :: [a] -> [a] -> [a]
+-- [] +++ xs = xs
+-- xs +++ _ = xs
+--
+-- infixr 5 +++
 
 fth4 (_, _, _, w) = w
 

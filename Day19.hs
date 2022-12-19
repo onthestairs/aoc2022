@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Day19 (solution) where
@@ -40,32 +39,38 @@ search n init step toSeen = go 0 Set.empty [init]
     go t _ ss | t == n = ss
     go t seen ss = go (t + 1) m' ss'
       where
-        ss' = ordNub $ concatMap (step seen) ss
+        ss' = concatMap (step seen) ss
         m' = Set.union seen (Set.fromList (map toSeen ss'))
 
-mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = maximum $ map (fth4 . fst) $ search n ((0, 0, 0, 0), (1, 0, 0, 0)) step snd
+maxGeode n b = maximum $ map (fth4 . fst) $ mine n b
+
+mine n (oreCostOre, clayCostOre, (obsidianCostOre, obsidianCostClay), (geodeCostOre, geodeCostObsidian)) = search n ((0, 0, 0, 0), (1, 0, 0, 0)) step snd
   where
     maxOreCost = maximum [oreCostOre, clayCostOre, obsidianCostOre, geodeCostOre]
-    step :: Set.Set (Int, Int, Int, Int) -> ((Int, Int, Int, Int), (Int, Int, Int, Int)) -> [((Int, Int, Int, Int), (Int, Int, Int, Int))]
     step m ((ore, clay, obsidian, geode), (oreRobots, clayRobots, obsidianRobots, geodeRobots)) = nothingBuilt : builds
       where
+        -- check we havent seen the configuarion of robots on a previous step,
+        -- which will be strictly better
         builds = filter (\(_, rs) -> Set.notMember rs m) (geodeBuilt <> obsidianBuilt <> clayBuilt <> oreBuilt)
         oreBuilt =
           [ ((ore + oreRobots - oreCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots + 1, clayRobots, obsidianRobots, geodeRobots))
             | ore >= oreCostOre,
               oreRobots <= maxOreCost,
+              -- dont try to build ore if we can build obsidian or geode
               null obsidianBuilt || null geodeBuilt
           ]
         clayBuilt =
           [ ((ore + oreRobots - clayCostOre, clay + clayRobots, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots + 1, obsidianRobots, geodeRobots))
             | ore >= clayCostOre,
               clayRobots <= obsidianCostClay,
+              -- dont try and build clay if we can build obidian or geode
               null obsidianBuilt || null geodeBuilt
           ]
         obsidianBuilt =
           [ ((ore + oreRobots - obsidianCostOre, clay + clayRobots - obsidianCostClay, obsidian + obsidianRobots, geode + geodeRobots), (oreRobots, clayRobots, obsidianRobots + 1, geodeRobots))
             | ore >= obsidianCostOre && clay >= obsidianCostClay,
               obsidianRobots <= geodeCostObsidian,
+              -- dont try and build obsidian if we can build geode
               null geodeBuilt
           ]
         geodeBuilt =
@@ -79,13 +84,9 @@ fth4 (_, _, _, w) = w
 
 snd3 (_, y, _) = y
 
-solve1 = sum . map (\(id, costs) -> id * mine 24 costs)
+solve1 = sum . map (\(id, costs) -> id * maxGeode 24 costs)
 
-t1, t2 :: (Int, Int, (Int, Int), (Int, Int))
-t1 = (4, 2, (3, 14), (2, 7))
-t2 = (2, 3, (3, 8), (3, 12))
-
-solve2 = product . map (mine 32 . snd) . take 3
+solve2 = product . map (maxGeode 32 . snd) . take 3
 
 solution =
   Solution

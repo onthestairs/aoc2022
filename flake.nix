@@ -26,7 +26,6 @@
           containers
           matrix
           fgl
-          vector
         ];
         my-ghc = myHaskellPackages.ghcWithPackages haskellDeps;
 

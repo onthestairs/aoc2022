@@ -4,59 +4,51 @@
 module Day20 (solution) where
 
 import AOC (Parser, Solution (..), forceMaybe, parseInt, parseNegativeInt, sepByNewline)
-import Control.Monad.ST (runST)
-import Data.List (nub)
-import qualified Data.Vector as V
-import qualified Data.Vector.Mutable as MV
+import Data.List (findIndex, (!!))
 import Relude
 import Relude.Extra (Foldable1 (maximum1))
-import Text.Megaparsec (eof, sepBy1)
-import Text.Megaparsec.Char (lowerChar, newline)
 
 type Input = [Int]
 
 parseInput :: Parser Input
 parseInput = sepByNewline (parseInt <|> parseNegativeInt)
 
-makeSwapsRight i 0 l = []
-makeSwapsRight i n l = (i', j') : makeSwapsRight j' (n - 1) l
+popIndex xs i = (deleted, before ++ after)
   where
-    (i', j') = if i == l - 1 then (i, 0) else (i, i + 1)
+    (before, deleted, after) = case splitAt i xs of
+      (b, x : a) -> (b, x, a)
+      (b, []) -> error "none"
 
-makeSwapsLeft i 0 l = []
-makeSwapsLeft i n l = (i', j') : makeSwapsLeft j' (n - 1) l
+move :: [a] -> Int -> Int -> [a]
+move ns i j = before ++ [n] ++ after
   where
-    (i', j') = if i == 0 then (i, l - 1) else (i, i - 1)
+    (n, ns') = popIndex ns i
+    (before, after) = splitAt j ns'
 
-makeSwaps i n l = if n > 0 then makeSwapsRight i n l else makeSwapsLeft i (-n) l
-
-move ns i n = forM_ swaps (\(i, j) -> MV.swap ns i j)
+mix ns = foldl' f ns [0 .. length ns - 1]
   where
-    swaps = makeSwaps i n (MV.length ns)
+    f ns' originalIndex = move ns' currentIndex targetIndex
+      where
+        currentIndex = forceMaybe $ findIndex ((==) originalIndex . fst) ns'
+        (_, n) = forceMaybe $ find ((==) originalIndex . fst) ns'
+        targetIndex' = (currentIndex + n) `mod` (length ns - 1)
+        targetIndex = if targetIndex' == 0 then length ns - 1 else targetIndex'
 
-wrappedLookup xs i = (V.!) xs i'
+wrappedLookup xs i = (!!) xs i'
   where
-    i' = i `mod` V.length xs
+    i' = i `mod` length xs
 
-mix ns' = forM [0 .. MV.length ns' - 1] $ \originalIndex -> do
-  ns'' <- V.freeze ns'
-  let index = traceShow originalIndex $ forceMaybe $ V.findIndex ((==) originalIndex . fst) ns''
-  let (_, n) = (V.!) ns'' index
-  move ns' index n
-
-extractResult v = sum $ map (snd . wrappedLookup v . (+ zeroIndex)) indexes
+extractResult ns = sum $ map (snd . wrappedLookup ns . (+ zeroIndex)) indexes
   where
     indexes = [1000, 2000, 3000]
-    zeroIndex = forceMaybe $ V.findIndex ((==) 0 . snd) v
+    zeroIndex = forceMaybe $ findIndex ((==) 0 . snd) ns
 
-solve1 ns = runST $ do
-  let ins = V.indexed $ V.fromList ns
-  ns' <- V.thaw ins
-  mix ns'
-  finalNs <- V.freeze ns'
-  pure $ extractResult finalNs
+solve1 = extractResult . mix . zip [0 ..]
 
-solve2 = const 2
+iterateN 0 f = id
+iterateN n f = f . iterateN (n - 1) f
+
+solve2 = extractResult . iterateN 10 mix . zip [0 ..] . map (* 811589153)
 
 solution =
   Solution

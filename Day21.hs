@@ -69,18 +69,15 @@ eval startName m = goMemo startName
 
 solve1 = eval "root"
 
-data E = E Expr Expr deriving (Eq)
-
-instance AOCShow E where
-  showResult (E e1 e2) = showResult e1 <> " == " <> showResult e2
+data Equation = Equation Expr Expr deriving (Eq)
 
 converge :: Eq a => (a -> a) -> a -> a
 converge f x = if x == x' then x else converge f x'
   where
     x' = f x
 
-simplify :: E -> E
-simplify (E e1 e2) = uncurry E $ converge simplify' (e1, e2)
+simplify :: Equation -> Equation
+simplify (Equation e1 e2) = uncurry Equation $ converge simplify' (e1, e2)
   where
     simplify' (F Mul (Lit n1) e1, Lit n2) = (e1, Lit $ n2 `div` n1)
     simplify' (F Add (Lit n1) e1, Lit n2) = (e1, Lit $ n2 - n1)
@@ -92,14 +89,14 @@ simplify (E e1 e2) = uncurry E $ converge simplify' (e1, e2)
     simplify' (F Div e1 (Lit n1), Lit n2) = (e1, Lit $ n2 * n1)
     simplify' es = es
 
-eval2 m = extract $ simplify $ E (goMemo rootN1) (goMemo rootN2)
+eval2 m = extract $ simplify $ Equation (goMemo rootN1) (goMemo rootN2)
   where
     m' = Map.insert "humn" (Var "humn") m
     (F Add (Name rootN1) (Name rootN2)) = lookup "root" m'
     goMemo = memoFix $ \go name -> case lookup name m' of
       (F op (Name n1) (Name n2)) -> evalOp op (go n1) (go n2)
       e -> e
-    extract (E (Var "humn") n) = n
+    extract (Equation (Var "humn") n) = n
 
 solve2 = eval2
 

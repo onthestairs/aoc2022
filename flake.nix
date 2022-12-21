@@ -26,6 +26,7 @@
           containers
           matrix
           fgl
+          memoize
         ];
         my-ghc = myHaskellPackages.ghcWithPackages haskellDeps;
 

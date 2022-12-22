@@ -8,7 +8,6 @@ import Data.List (maximumBy, minimumBy, nub)
 import qualified Data.Set as Set
 import Distribution.Fields.Lexer (Token (CloseBrace))
 import Relude
-import Relude.Extra (Foldable1 (maximum1))
 import Text.Megaparsec (eof, sepBy1)
 import Text.Megaparsec.Char (char, lowerChar, newline)
 
@@ -49,7 +48,7 @@ minimumOnCol os c = minimumBy (comparing snd) $ Set.toList $ Set.filter (\(row, 
 
 maximumOnCol os c = maximumBy (comparing fst) $ Set.toList $ Set.filter (\(row, col) -> col == c) os
 
-data Facing = FLeft | FRight | FUp | FDown deriving (Show)
+data Facing = FLeft | FRight | FUp | FDown deriving (Show, Eq)
 
 rotateCounterClockwise FLeft = FDown
 rotateCounterClockwise FDown = FRight
@@ -82,11 +81,10 @@ stepPlane os ss pos facing = (nextP, nextFacing)
         then wrapPlane os ss hopefulNextP facing
         else (hopefulNextP, facing)
 
-move step os ss pos facing 0 = pos
+move step os ss pos facing 0 = (pos, facing)
 move step os ss pos facing n =
-  -- traceShow (("next", nextP, "facing", facing)) $
   if Set.member nextP ss
-    then pos
+    then (pos, facing)
     else move step os ss nextP nextFacing (n - 1)
   where
     (nextP, nextFacing) = step os ss pos facing
@@ -97,9 +95,9 @@ doMoves wrap os ss ms = go (start, FRight) ms
     go (pos, facing) [] = (pos, facing)
     go (pos, facing) (CounterClockwise : ms') = go (pos, rotateCounterClockwise facing) ms'
     go (pos, facing) (Clockwise : ms') = go (pos, rotateClockwise facing) ms'
-    go (pos, facing) (F n : ms') = go (nextPos, facing) ms'
+    go (pos, facing) (F n : ms') = go (nextPos, nextFacing) ms'
       where
-        nextPos = move wrap os ss pos facing n
+        (nextPos, nextFacing) = move wrap os ss pos facing n
 
 password ((row, col), facing) = 1000 * row + 4 * col + facingScore facing
   where
@@ -115,12 +113,28 @@ solve step (ts, ms) = password $ doMoves step openTiles solidTiles ms
 solve1 :: Input -> Int
 solve1 = solve stepPlane
 
-wrapCube os ss (row, col) FLeft = maximumOnRow (Set.union os ss) row
-wrapCube os ss (row, col) FRight = minimumOnRow (Set.union os ss) row
-wrapCube os ss (row, col) FUp = maximumOnCol (Set.union os ss) col
-wrapCube os ss (row, col) FDown = minimumOnCol (Set.union os ss) col
+-- right
+stepCube os ss (row, col) FRight | col == 150, row >= 1, row <= 50 = ((101 + (50 - row), 100), FLeft)
+stepCube os ss (row, col) FRight | col == 100, row >= 51, row <= 100 = ((50, 101 + (row - 51)), FUp)
+stepCube os ss (row, col) FRight | col == 100, row >= 101, row <= 150 = ((1 + (150 - row), 150), FLeft)
+stepCube os ss (row, col) FRight | col == 50, row >= 151, row <= 200 = ((150, 51 + (row - 151)), FUp)
+-- down
+stepCube os ss (row, col) FDown | row == 50, col >= 101, col <= 150 = ((51 + (col - 101), 100), FLeft)
+stepCube os ss (row, col) FDown | row == 150, col >= 51, col <= 100 = ((151 + (col - 51), 50), FLeft)
+stepCube os ss (row, col) FDown | row == 200, col >= 1, col <= 50 = ((1, 101 + (col - 1)), FDown)
+-- left
+stepCube os ss (row, col) FLeft | col == 51, row >= 1, row <= 50 = ((101 + (50 - row), 1), FRight)
+stepCube os ss (row, col) FLeft | col == 51, row >= 51, row <= 100 = ((101, 1 + (row - 51)), FDown)
+stepCube os ss (row, col) FLeft | col == 1, row >= 101, row <= 150 = ((1 + (150 - row), 51), FRight)
+stepCube os ss (row, col) FLeft | col == 1, row >= 151, row <= 200 = ((1, 51 + (row - 151)), FDown)
+-- up
+stepCube os ss (row, col) FUp | row == 1, col >= 51, col <= 100 = ((151 + (col - 51), 1), FRight)
+stepCube os ss (row, col) FUp | row == 101, col >= 1, col <= 50 = ((51 + (col - 1), 51), FRight)
+stepCube os ss (row, col) FUp | row == 1, col >= 101, col <= 150 = ((200, 1 + (col - 101)), FUp)
+-- otherwise
+stepCube os ss (row, col) facing = (next (row, col) facing, facing)
 
-solve2 = const 2
+solve2 = solve stepCube
 
 solution =
   Solution

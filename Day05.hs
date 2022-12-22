@@ -66,7 +66,7 @@ forceMaybe Nothing = error "no value"
 makeMove9000 css (0, from, to) = css
 makeMove9000 css (n, from, to) = makeMove9000 (makeMove9001 css (1, from, to)) (n - 1, from, to)
 
-solve1 = mapMaybe (viaNonEmpty head) . uncurry (foldl' makeMove9000)
+solve1 = toText . mapMaybe (viaNonEmpty head) . uncurry (foldl' makeMove9000)
 
 makeMove9001 css (n, from, to) = [makeStack i | i <- [1 .. length css]]
   where
@@ -77,7 +77,7 @@ makeMove9001 css (n, from, to) = [makeStack i | i <- [1 .. length css]]
       | i == to = newTo
       | otherwise = forceMaybe $ css !!? (i - 1)
 
-solve2 = mapMaybe (viaNonEmpty head) . uncurry (foldl' makeMove9001)
+solve2 = toText . mapMaybe (viaNonEmpty head) . uncurry (foldl' makeMove9001)
 
 solution =
   Solution

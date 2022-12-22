@@ -39,6 +39,9 @@ instance Show a => AOCShow (Maybe a) where
 instance AOCShow Integer where
   showResult = show
 
+instance AOCShow Text where
+  showResult = id
+
 instance AOCShow Int where
   showResult = show
 

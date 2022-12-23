@@ -65,7 +65,6 @@ next (row, col) FRight = (row, col + 1)
 next (row, col) FUp = (row - 1, col)
 next (row, col) FDown = (row + 1, col)
 
-wrapPlane' :: Set.Set (Int, Int) -> Set.Set (Int, Int) -> (Int, Int) -> Facing -> (Int, Int)
 wrapPlane' os ss (row, col) FLeft = maximumOnRow (Set.union os ss) row
 wrapPlane' os ss (row, col) FRight = minimumOnRow (Set.union os ss) row
 wrapPlane' os ss (row, col) FUp = maximumOnCol (Set.union os ss) col

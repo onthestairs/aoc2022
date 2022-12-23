@@ -3,22 +3,19 @@
 
 module Day23 (solution) where
 
-import AOC (Parser, Solution (..), parseInt, sepByNewline)
-import Data.List (maximum, minimum, nub)
+import AOC (Parser, Solution (..), head', sepByNewline)
+import Data.List (maximum, minimum)
 import qualified Data.Map as Map
 import qualified Data.Matrix as Matrix
 import qualified Data.Set as Set
 import Relude hiding (round)
-import Relude.Extra (Foldable1 (maximum1))
-import Text.Megaparsec (eof, sepBy1)
-import Text.Megaparsec.Char (char, lowerChar, newline)
+import Text.Megaparsec.Char (char)
 
 type Input = [String]
 
 parseInput :: Parser Input
 parseInput = sepByNewline (many (char '.' <|> char '#'))
 
-toElves :: Input -> Set.Set (Int, Int)
 toElves = Set.fromList . map (\(x, y, c) -> (x, y)) . filter (\(_, _, c) -> c == '#') . concat . zipWith (\y row -> zipWith (\x c -> (x, y, c)) [0 ..] row) [0 ..]
 
 neighbours (x, y) = Set.fromList [(x + dx, y + dy) | dx <- [-1, 0, 1], dy <- [-1, 0, 1], not (dx == 0 && dy == 0)]
@@ -68,11 +65,10 @@ data Move = North | South | West | East
 rotate [] = []
 rotate (x : xs) = xs ++ [x]
 
-rounds n elves = go n moves elves
+rounds = go moves
   where
     moves = [North, South, West, East]
-    go 0 _ elves' = elves'
-    go n' moves elves' = go (n' - 1) (rotate moves) newElves
+    go moves elves' = elves' : go (rotate moves) newElves
       where
         newElves = round elves' moves
 
@@ -89,18 +85,13 @@ emptyTiles es = n - Set.size es
     ((xMin, yMin), (xMax, yMax)) = bounds es'
     n = (xMax - xMin + 1) * (yMax - yMin + 1)
 
-t :: Set.Set (Int, Int)
-t = Set.fromList [(2, 1), (3, 1), (2, 2), (2, 4), (3, 4)]
+solve1 = emptyTiles . head' . drop 10 . rounds . toElves
 
-draw es = Matrix.matrix (yMax - yMin + 1) (xMax - xMin + 1) g
+countUntilEqual = go 0
   where
-    es' = Set.toList es
-    ((xMin, yMin), (xMax, yMax)) = bounds es'
-    g (row, col) = if Set.member (xMin + col - 1, yMin + row - 1) es then '#' else '.'
+    go n (x : y : rest) = if x == y then n + 1 else go (n + 1) (y : rest)
 
-solve1 = emptyTiles . rounds 10 . toElves
-
-solve2 = rounds 10 . toElves
+solve2 = countUntilEqual . rounds . toElves
 
 solution =
   Solution

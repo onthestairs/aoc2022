@@ -36,6 +36,7 @@ import Day20
 import Day21
 import Day22
 import Day23
+import Day24
 import Relude
 import System.Environment (getEnv)
 import Text.Megaparsec (runParser)
@@ -65,7 +66,8 @@ solutions =
       (20, SimpleSolution Day20.solution),
       (21, SimpleSolution Day21.solution),
       (22, SimpleSolution Day22.solution),
-      (23, SimpleSolution Day23.solution)
+      (23, SimpleSolution Day23.solution),
+      (24, SimpleSolution Day24.solution)
     ]
 
 data Part = Part1 | Part2 | Both deriving (Eq)

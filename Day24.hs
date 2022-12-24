@@ -37,7 +37,6 @@ toBlizzards ts = Map.fromListWith (++) blizzardDirs
     f (x, y, Blizzard d) = Just ((x, y), [d])
     f _ = Nothing
 
-findBounds :: [[a]] -> (Int, Int, Int, Int)
 findBounds ts = (0, length (head' ts) - 1, 0, length ts - 1)
 
 findStartEnd ts = ((startX, 0), (endX, endY))
@@ -60,60 +59,29 @@ steps start end (minX, maxX, minY, maxY) bs (x, y) = filter isNotBlizzard $ filt
     inBounds (x', y') = (x', y') == start || (x', y') == end || (x' > minX && x' < maxX && y' > minY && y' < maxY)
     isNotBlizzard (x, y) = Map.notMember (x, y) bs
 
-findPath :: (Int, Int, Int, Int) -> (Int, Int) -> (Int, Int) -> Map.Map (Int, Int) [Dir] -> Int
 findPath bounds start end startBs = go 0 startBs (Set.singleton start)
   where
-    go :: Int -> Map.Map (Int, Int) [Dir] -> Set.Set (Int, Int) -> Int
-    go n bs ss | Set.member end ss = n
+    go n bs ss | Set.member end ss = (n, bs)
     go n bs ss = go (n + 1) bs' ss'
       where
         bs' = stepBlizzards bounds bs
         ss' = Set.fromList $ concatMap step $ Set.toList ss
         step (x, y) = steps start end bounds bs' (x, y)
 
-data B = BR | BL | BU | BD | M Int | W | E
-
-instance Show B where
-  show BR = ">"
-  show BL = "<"
-  show BU = "^"
-  show BD = "v"
-  show (M n) = Text.Show.show n
-  show W = "#"
-  show E = "."
-
-drawBlizzards (minX, maxX, minY, maxY) bs = Matrix.matrix rs cs f
-  where
-    rs = maxY - minY + 1
-    cs = maxX - minX + 1
-    f (row, col) | col - 1 == minX = W
-    f (row, col) | col - 1 == maxX = W
-    f (row, col) | row - 1 == minX = W
-    f (row, col) | row - 1 == maxY = W
-    f (row, col) = case Map.lookup (col - 1, row - 1) bs of
-      Just [d] -> case d of
-        R -> BR
-        L -> BL
-        U -> BU
-        D -> BD
-      Just ds -> M $ length ds
-      Nothing -> E
-
-solve1 ts = findPath bounds start end blizzards
+solve1 ts = fst $ findPath bounds start end blizzards
   where
     blizzards = toBlizzards ts
-    bounds = traceShowId $ findBounds ts
+    bounds = findBounds ts
     (start, end) = findStartEnd ts
 
-check bounds 0 bs = []
-check bounds n bs = traceShow (drawBlizzards bounds bs) $ Map.size bs : check bounds (n - 1) bs'
-  where
-    bs' = stepBlizzards bounds bs
-
-solve2 ts = product $ traceShowId $ check bounds 3 blizzards
+solve2 ts = n1 + n2 + n3
   where
     blizzards = toBlizzards ts
-    bounds = traceShowId $ findBounds ts
+    bounds = findBounds ts
+    (start, end) = findStartEnd ts
+    (n1, b1) = findPath bounds start end blizzards
+    (n2, b2) = findPath bounds end start b1
+    (n3, _) = findPath bounds start end b2
 
 solution =
   Solution

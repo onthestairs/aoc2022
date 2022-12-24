@@ -24,10 +24,6 @@ populatedNeighbours (x, y) es = Set.filter (`Set.member` es) ns
   where
     ns = neighbours (x, y)
 
-mapFirst f [] = Nothing
-mapFirst f (x : xs) = case f x of
-  Just v -> Just v
-  Nothing -> mapFirst f xs
 
 moveAdjacent North (x, y) = [(x, y - 1), (x - 1, y - 1), (x + 1, y - 1)]
 moveAdjacent South (x, y) = [(x, y + 1), (x - 1, y + 1), (x + 1, y + 1)]
@@ -47,7 +43,7 @@ isValidMove d (x, y) neighbours =
 round elves moves = newElves
   where
     proposals = mapMaybe propose $ Set.toList elves
-    propose from = if Set.null elfNeighbours then Nothing else mapFirst isGoodProposal moves
+    propose from = if Set.null elfNeighbours then Nothing else getFirst $ foldMap (First . isGoodProposal) moves
       where
         elfNeighbours = populatedNeighbours from elves
         isGoodProposal move = case isValidMove move from elfNeighbours of

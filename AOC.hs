@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), AOCShow, showResult, printResult, Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', tail', last', forceMaybe, chunk) where
+module AOC (Solution (..), SeparateParseSolution (..), GenericSolution (..), NoPuzzle (NoPuzzle), AOCShow, showResult, printResult, Parser, parseInt, parseDigit, parseInt64, parseInteger, parseNegativeInt, parseSignedInt, sepByNewline, init', head', tail', last', forceMaybe, chunk) where
 
 import Control.Lens
 import Relude
@@ -26,6 +26,8 @@ data SeparateParseSolution a b c d = SeparateParseSolution
     _solveWith2 :: c -> d
   }
   deriving (Generic)
+
+data NoPuzzle = NoPuzzle
 
 class AOCShow a where
   showResult :: a -> Text
@@ -50,6 +52,9 @@ instance Show a => AOCShow [a] where
 
 instance (Show a, Show b) => AOCShow (a, b) where
   showResult = show
+
+instance AOCShow NoPuzzle where
+  showResult = const ("No puzzle for this part" :: Text)
 
 data GenericSolution where
   SimpleSolution :: (Show a, AOCShow b, AOCShow c) => Solution a b c -> GenericSolution
